@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#102d35"><meta name="description" content="Niriksha — digital field record prototype"><title>Niriksha | Digital Record Companion</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <main id="loginView" class="login-screen">
+    <section class="login-brand"><div class="login-logo"><img src="Niriksha-logo.svg" alt="Niriksha insignia"><span>Niriksha<small>FIELD RECORD COMPANION</small></span></div><div class="eyebrow">FIELD OPERATIONS · DEMO ENVIRONMENT</div><h1>Clarity in the field.<br><em>Confidence in every record.</em></h1><p>A guided digital companion for capturing, reviewing and verifying field-test records.</p><div class="login-note"><span class="pulse"></span> Prototype workspace <span class="dot">·</span> Records use the demo backend</div></section>
+    <section class="login-card"><div class="mobile-brand"><img src="Niriksha-logo.svg" alt=""><b>Niriksha</b></div><div class="eyebrow" id="loginEyebrow">WELCOME BACK</div><h2 id="loginHeading">Sign in to continue</h2><p class="muted" id="loginDescription">Use the demo credentials to explore.</p><form id="loginForm"><label for="operatorId">Operator ID</label><input id="operatorId" value="OP-104" autocomplete="username" required><label for="password">Password</label><div class="password-wrap"><input id="password" type="password" value="demo1234" autocomplete="current-password" required><button type="button" class="show-pass" id="togglePass">Show</button></div><button class="btn primary full" type="submit">Continue <span>→</span></button></form><form id="otpForm" class="otp-panel hidden"><label for="otpCode">One-time passcode</label><input id="otpCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6-digit code" required><div class="otp-demo-code">DEMO CODE <strong>246810</strong></div><button class="btn primary full" type="submit">Verify demo code <span>→</span></button><button class="text-link otp-back" type="button" id="otpBack">← Back to sign in</button><div class="otp-warning"><span class="info-icon">i</span><span>Demo backend checks this code, but it is fixed and not delivered to a verified device. Not production authentication.</span></div></form><div class="demo-credentials" id="loginHint"><span class="info-icon">i</span> Demo login: OP-104 / demo1234. The local Node backend must be running.</div></section>
+  </main>
+  <div id="app" class="app-shell hidden">
+    <aside class="sidebar"><a class="brand" href="#dashboard" data-view="dashboard"><img src="Niriksha-logo.svg" alt=""><div><strong>Niriksha</strong><small>FIELD RECORD COMPANION</small></div></a><div class="nav-label">WORKSPACE</div><nav class="main-nav"><button data-view="dashboard" class="nav-item active"><span class="nav-icon">◫</span> Overview</button><button data-view="new-test" class="nav-item"><span class="nav-icon plus-icon">＋</span> New test</button><button data-view="history" class="nav-item"><span class="nav-icon">▤</span> Test history <span class="nav-count" id="navCount">0</span></button></nav><div class="nav-label secondary-label">ACCOUNT</div><nav class="main-nav"><button data-view="profile" class="nav-item"><span class="nav-icon">◉</span> My profile</button><button data-view="settings" class="nav-item"><span class="nav-icon">⚙</span> Settings</button></nav><div class="sidebar-bottom"><div class="offline-card"><div class="offline-top"><span class="status-dot"></span><b>Demo backend</b></div><p>New demo records are saved on this server.</p><span class="offline-tag">SERVER · DEMO MODE</span></div><button id="logoutButton" class="logout"><span>↪</span> Sign out</button></div></aside>
+    <section class="main-area"><header class="topbar"><div class="breadcrumb"><span>Workspace</span><span class="crumb-slash">/</span><b id="pageTitle">Overview</b></div><div class="top-actions"><span class="env-pill"><span class="status-dot"></span> DEMO MODE</span><button class="avatar" id="topAvatar" aria-label="Open profile">OP</button></div></header>
+      <div class="content" id="content"></div>
+      <footer class="footer"><span>Niriksha <b>·</b> SIH 2026 prototype</span><span>For demonstration only · No real test analysis is performed</span></footer>
+    </section>
+  </div>
+  <dialog id="recordDialog" class="record-dialog"><div id="recordDialogBody"></div><button class="dialog-close" id="closeDialog" aria-label="Close">×</button></dialog>
+  <script src="script.js"></script>
+</body></html>
