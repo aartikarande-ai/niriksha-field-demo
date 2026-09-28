@@ -12,11 +12,24 @@ const sessions = new Map();
 const pendingOtps = new Map();
 const loginAttempts = new Map();
 const demoOtp = process.env.DEMO_OTP || '246810';
+const allowedOrigins = new Set([
+  'https://localhost',
+  'capacitor://localhost',
+  ...(process.env.CORS_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean)
+]);
 
 const mime = { '.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.ico':'image/x-icon' };
 const json = (res, status, body, extra={}) => { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...extra}); res.end(JSON.stringify(body)); };
 function cookies(req){return Object.fromEntries((req.headers.cookie||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const i=x.indexOf('=');return [x.slice(0,i),decodeURIComponent(x.slice(i+1))]}))}
 function sessionFor(req){const token=cookies(req).niriksha_session;return token?sessions.get(token):null}
+function sessionCookie(req,token,maxAge){
+  const forwardedProto=String(req.headers['x-forwarded-proto']||'http').split(',')[0].trim();
+  const requestOrigin=`${forwardedProto}://${req.headers.host}`;
+  const crossOrigin=Boolean(req.headers.origin&&req.headers.origin!==requestOrigin);
+  const secure=process.env.NODE_ENV==='production'||forwardedProto==='https';
+  const sameSite=crossOrigin?'None':'Strict';
+  return `niriksha_session=${token}; HttpOnly; SameSite=${sameSite}; Path=/; Max-Age=${maxAge};${secure?' Secure;':''}`;
+}
 async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>1_000_000)throw new Error('Request body too large')}return raw?JSON.parse(raw):{}}
 async function readRecords(){try{return JSON.parse(await fs.readFile(RECORDS_FILE,'utf8'))}catch{return []}}
 let writeQueue=Promise.resolve();
@@ -26,6 +39,18 @@ function validRecord(r){return r&&typeof r==='object'&&typeof r.id==='string'&&r
 
 const server=http.createServer(async(req,res)=>{
   try{
+    const origin=req.headers.origin;
+    if(origin&&allowedOrigins.has(origin)){
+      res.setHeader('Access-Control-Allow-Origin',origin);
+      res.setHeader('Access-Control-Allow-Credentials','true');
+      res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers','Content-Type');
+      res.setHeader('Vary','Origin');
+    }
+    if(req.method==='OPTIONS'){
+      if(!origin||!allowedOrigins.has(origin))return json(res,403,{error:'App origin is not allowed.'});
+      res.writeHead(204);return res.end();
+    }
     const url=new URL(req.url,'http://localhost');
     if(req.method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,service:'Niriksha demo backend',mode:'prototype'});
     if(req.method==='POST'&&url.pathname==='/api/auth/login'){
@@ -43,14 +68,13 @@ const server=http.createServer(async(req,res)=>{
       challenge.attempts++;
       if(String(b.otp||'')!==demoOtp)return json(res,401,{error:'Incorrect demo code.'});
       pendingOtps.delete(operator);const token=crypto.randomBytes(32).toString('base64url');sessions.set(token,{operator,expires:Date.now()+8*60*60_000});
-      const secure=process.env.NODE_ENV==='production'?' Secure;':'';
-      return json(res,200,{ok:true,operatorId:operator,demoOnly:true},{'Set-Cookie':`niriksha_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800;${secure}`});
+      return json(res,200,{ok:true,operatorId:operator,demoOnly:true},{'Set-Cookie':sessionCookie(req,token,28800)});
     }
     if(req.method==='GET'&&url.pathname==='/api/auth/me'){
       const s=sessionFor(req);return s&&s.expires>Date.now()?json(res,200,{operatorId:s.operator,demoOnly:true}):json(res,401,{error:'Sign in required.'});
     }
     if(req.method==='POST'&&url.pathname==='/api/auth/logout'){
-      const token=cookies(req).niriksha_session;sessions.delete(token);return json(res,200,{ok:true},{'Set-Cookie':'niriksha_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});
+      const token=cookies(req).niriksha_session;sessions.delete(token);return json(res,200,{ok:true},{'Set-Cookie':sessionCookie(req,'',0)});
     }
     if(url.pathname.startsWith('/api/')){
       const s=sessionFor(req);if(!s||s.expires<Date.now())return json(res,401,{error:'Sign in required.'});
