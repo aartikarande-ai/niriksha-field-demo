@@ -1,25 +1,22 @@
-# Niriksha backend-connected prototype
+# Niriksha Android app preparation
 
-## Run locally
+This folder preserves the existing Niriksha HTML/CSS/JS app and Node backend while preparing it for Capacitor. It is not an APK yet.
+
+## Current API setup
+
+`config.js` keeps browser use same-origin (so Render and local Node both serve their own API) and points a packaged Capacitor Android app at `https://niriksha-field-demo.onrender.com`. Keep the API URL public; never place service credentials or signing secrets in this file. The backend copy permits Capacitor's default Android origins (`https://localhost` and `capacitor://localhost`) for credentialed API requests. Those backend changes must be deployed before an APK can connect.
+
+If another browser-hosted origin must call the API, add its exact origin to the Render environment variable `CORS_ORIGINS`, as a comma-separated list, then deploy the server update. Do not use a wildcard for credentialed requests.
+
+## Run a local server
 
 1. Install Node.js 20 or later.
-2. Double-click `Start-Niriksha.bat`, or open a terminal in this folder and run `npm start`.
-3. Open `http://localhost:8080` in a browser. Do not open `index.html` directly.
-4. Sign in with demo ID `OP-104`, password `demo1234`, and the demo OTP shown by the app (`246810`).
+2. Run `npm start` in this folder or use `Start-Niriksha.bat`.
+3. Open `http://localhost:8080`.
+4. Demo credentials are `OP-104` / `demo1234`; the OTP is fixed at `246810`.
 
-New demo records are submitted to `/api/records` and written to `data/records.json`. They are scoped to the entered demo operator ID. The image is not uploaded; only its browser-calculated SHA-256 digest is saved. Demo sample history remains illustrative.
+The current fixed OTP and shared password are demo authentication only. The backend stores records in a JSON file and does not provide durable database storage. Classification is simulated; the image is not analyzed or uploaded. Do not use real case or personal data.
 
-## API overview
+## Next steps
 
-- `GET /api/health` — backend status
-- `POST /api/auth/login` — validates demo credentials and starts a short-lived OTP challenge
-- `POST /api/auth/verify-otp` — checks the demo OTP and issues an HttpOnly session cookie
-- `GET /api/auth/me`, `POST /api/auth/logout` — session status and sign-out
-- `GET /api/records`, `POST /api/records` — read/write operator-scoped demo records
-- `POST /api/records/verify` — checks the saved server-side demo digest
-
-## Prototype limits
-
-This is a real local backend service, but it is **not safe for real case records or public production use**. The demo password and OTP are shared/fixed, accounts and roles are not managed, OTP is not delivered to a verified phone/email, sessions are held in server memory, and the JSON file is not encrypted or backed up. The server digest is not a digital signature or legal chain-of-custody control. Classification is still simulated and the reference-card model is not implemented.
-
-The existing Netlify Drop deployment serves static files only. It will not run this Node server. To make a public hosted version use the backend, deploy the server to a Node-capable host, provision durable database storage and real identity/MFA, and configure the frontend to call the deployed API over HTTPS with appropriate CORS and cookie settings. Never place server secrets in browser JavaScript.
+Follow [IMPLEMENTATION-PLAN.md](IMPLEMENTATION-PLAN.md) for the ordered auth, database, Capacitor, and Android-device work. Real OTP requires a configured identity/SMS provider and enrolled, verified operators. No APK packaging or Render deployment has been performed in this preparation step.
